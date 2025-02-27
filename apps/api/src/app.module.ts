@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { SongModule } from './song/song.module';
-import { UserModule } from './user/user.module';
-import { FavoriteSongModule } from './favorite-song/favorite-song.module';
+import { SongModule } from '@/modules/song/song.module';
+import { UserModule } from '@/modules/user/user.module';
+import { FavoriteSongModule } from '@/modules/favorite-song/favorite-song.module';
+import { PrismaModule } from '@/shared/prisma/prisma.module';
 
 @Module({
-    imports: [SongModule, UserModule, FavoriteSongModule],
+    imports: [PrismaModule, SongModule, UserModule, FavoriteSongModule, ],
 })
 export class AppModule {}

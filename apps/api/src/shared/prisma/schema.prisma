@@ -1,0 +1,44 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id            Int            @id @default(autoincrement())
+    name          String         @unique
+    password      String
+    createdAt     DateTime       @default(now()) @map("created_at")
+    updatedAt     DateTime       @updatedAt @map("updated_at")
+    favoriteSongs FavoriteSong[]
+
+    @@map("users")
+}
+
+model Song {
+    id           Int            @id @default(autoincrement())
+    title        String
+    duration     Int
+    artist       String
+    year         Int
+    genre        String
+    createdAt    DateTime       @default(now()) @map("created_at")
+    updatedAt    DateTime       @updatedAt @map("updated_at")
+    FavoriteSong FavoriteSong[]
+
+    @@map("songs")
+}
+
+model FavoriteSong {
+    userId    Int      @map("user_id")
+    songId    Int      @map("song_id")
+    song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now()) @map("created_at")
+
+    @@id([userId, songId])
+    @@map("favorite_songs")
+}
