@@ -7,15 +7,15 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '../pagination';
-import { useTableContext } from './table-context';
 
 interface TablePaginationProps {
     onPageChange?: (page: number) => void;
     itemsCount: number;
+    totalPages: number;
+    totalItems: number;
 }
 
-export function TablePagination({ onPageChange, itemsCount }: TablePaginationProps) {
-    const { totalItems, totalPages } = useTableContext();
+export function TablePagination({ onPageChange, itemsCount, totalPages, totalItems }: TablePaginationProps) {
     const [pagination, setPagination] = useState({
         page: 1,
         nextPage: totalPages > 1 ? 2 : null,

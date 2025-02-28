@@ -14,7 +14,6 @@ import {
 import { TableToolbar } from './table-toolbar';
 import { DataTable } from './data-table';
 import { TablePagination } from './table-pagination';
-import { TableContext } from './table-context';
 
 export type Column<TData extends RowData, TValue = unknown> = ColumnDef<TData, TValue>;
 
@@ -69,31 +68,21 @@ export function SmartTable<TData, TValue>({
         pageCount: totalPages,
     });
 
-    const contextValue = React.useMemo(
-        () => ({
-            table,
-            sorting,
-            setSorting,
-            columnFilters,
-            setColumnFilters,
-            totalItems,
-            totalPages,
-        }),
-        [table, sorting, columnFilters, totalItems, totalPages]
-    );
-
     return (
-        <TableContext.Provider value={contextValue}>
-            <div className="w-full">
-                <TableToolbar
-                    pageSizeOptions={paginationProps?.pageSizeOptions ?? [10, 20, 30, 40, 50]}
-                    defaultPageSize={paginationProps?.pageSize ?? 10}
-                    onPageSizeChange={onPageSizeChange}
-                    onInputChange={onInputChange}
-                />
-                <DataTable table={table} columns={columns.length} />
-                <TablePagination onPageChange={onPageChange} itemsCount={data.length} />
-            </div>
-        </TableContext.Provider>
+        <div className="w-full">
+            <TableToolbar
+                pageSizeOptions={paginationProps?.pageSizeOptions ?? [10, 20, 30, 40, 50]}
+                defaultPageSize={paginationProps?.pageSize ?? 10}
+                onPageSizeChange={onPageSizeChange}
+                onInputChange={onInputChange}
+            />
+            <DataTable table={table} columns={columns.length} />
+            <TablePagination
+                onPageChange={onPageChange}
+                itemsCount={data.length}
+                totalPages={totalPages}
+                totalItems={totalItems}
+            />
+        </div>
     );
 }
