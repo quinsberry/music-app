@@ -24,9 +24,8 @@ type RequestOptions = {
 };
 
 const handleResponse = async <T = unknown>(response: Response): Promise<T> => {
-    console.log(response);
     switch (true) {
-        case response.status === 200 || response.status === 201:
+        case response.status === 200 || response.status === 201 || response.status === 204:
             return response.json();
         default:
             let error: ResponseError | undefined;
