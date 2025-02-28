@@ -24,6 +24,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from './pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
 export type Column<TData extends RowData, TValue = unknown> = ColumnDef<TData, TValue>;
 
@@ -32,9 +33,11 @@ interface SmartTableProps<TData, TValue> {
     data: TData[];
     onInputChange?: (value: string) => void;
     onPageChange?: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
     pagination?: {
         totalItems: number;
         pageSize: number;
+        pageSizeOptions?: number[];
     };
     onSortingsChange?: (sortings: SortingState[number]) => void;
 }
@@ -52,6 +55,7 @@ export function SmartTable<TData, TValue>({
     pagination: paginationProps,
     onInputChange,
     onPageChange,
+    onPageSizeChange,
     onSortingsChange,
 }: SmartTableProps<TData, TValue>) {
     const [search, setSearch] = React.useState('');
@@ -62,6 +66,7 @@ export function SmartTable<TData, TValue>({
 
     const pageSize = paginationProps?.pageSize ?? 10;
     const totalItems = paginationProps?.totalItems ?? data.length;
+    const pageSizeOptions = paginationProps?.pageSizeOptions ?? [10, 20, 30, 40, 50];
     const totalPages = Math.ceil(totalItems / pageSize);
     const defaultPagination: Pagination = {
         page: 1,
@@ -95,10 +100,12 @@ export function SmartTable<TData, TValue>({
             columnVisibility,
             rowSelection,
             pagination: {
-                pageIndex: 0,
-                pageSize,
+                pageIndex: pagination.page - 1,
+                pageSize: paginationProps?.pageSize ?? 10,
             },
         },
+        manualPagination: true,
+        pageCount: Math.ceil((paginationProps?.totalItems ?? 0) / (paginationProps?.pageSize ?? 10)),
     });
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,8 +141,32 @@ export function SmartTable<TData, TValue>({
 
     return (
         <div className="w-full">
-            <div className="flex items-center py-4">
+            <div className="flex items-center justify-between py-4">
                 <Input placeholder="Search..." value={search} onChange={handleInputChange} className="max-w-sm" />
+                <Select
+                    value={String(paginationProps?.pageSize ?? 10)}
+                    onValueChange={(value) => {
+                        const newSize = Number(value);
+                        onPageSizeChange?.(newSize);
+                        setPagination((prev) => ({
+                            ...prev,
+                            page: 1,
+                            nextPage: 2,
+                            prevPage: null,
+                        }));
+                    }}
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select page size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {pageSizeOptions.map((size) => (
+                            <SelectItem key={size} value={String(size)}>
+                                {size} items per page
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="rounded-sm border">
                 <Table>

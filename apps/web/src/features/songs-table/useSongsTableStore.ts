@@ -48,6 +48,24 @@ export const useSongsTableStore = () => {
 
     const searchSongs = useCallback(debounce(fetchSongs, 300), []);
 
+    const setPageSize = async (newPageSize: number) => {
+        setPagination((prev) => ({
+            ...prev,
+            pageSize: newPageSize,
+        }));
+
+        try {
+            const songs = await getSongs('', 0, newPageSize);
+            setSongs(songs.data);
+            setPagination((prev) => ({
+                totalItems: songs.meta.total,
+                pageSize: newPageSize,
+            }));
+        } catch (error) {
+            console.error('Failed to fetch songs with new page size:', error);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -69,5 +87,6 @@ export const useSongsTableStore = () => {
         sortSongs,
         toggleFavorite,
         searchSongs,
+        setPageSize,
     };
 };

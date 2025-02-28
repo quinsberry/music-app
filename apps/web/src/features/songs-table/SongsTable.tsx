@@ -8,7 +8,7 @@ import { Checkbox } from '@/shared/ui/checkbox';
 import { useSongsTableStore } from './useSongsTableStore';
 
 export const SongsTable = () => {
-    const { songs, pagination, isAuthenticated, fetchSongs, sortSongs, toggleFavorite, searchSongs } =
+    const { songs, pagination, isAuthenticated, fetchSongs, sortSongs, toggleFavorite, searchSongs, setPageSize } =
         useSongsTableStore();
 
     const columns: Column<Song>[] = [
@@ -100,6 +100,7 @@ export const SongsTable = () => {
             data={songs}
             onInputChange={(value) => searchSongs(value, 1)}
             onPageChange={(page) => fetchSongs('', page)}
+            onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
             onSortingsChange={(sorting) => {
                 if (sorting.id === 'title') {
                     sortSongs('title', sorting.desc ? 'desc' : 'asc');
@@ -114,6 +115,7 @@ export const SongsTable = () => {
             pagination={{
                 totalItems: pagination.totalItems,
                 pageSize: pagination.pageSize,
+                pageSizeOptions: [5, 10, 15, 20],
             }}
         />
     );
