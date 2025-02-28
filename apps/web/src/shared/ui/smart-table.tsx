@@ -1,206 +1,161 @@
+'use client';
+
+import * as React from 'react';
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu';
-import { Input } from '@/shared/ui/input';
-import { TableBody, TableCell } from '@/shared/ui/table';
-import { Table, TableHead, TableRow } from '@/shared/ui/table';
-import { TableHeader } from '@/shared/ui/table';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useMemo, useState } from 'react';
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+    getPaginationRowModel,
+    getFilteredRowModel,
+    ColumnFiltersState,
+    getSortedRowModel,
+    VisibilityState,
+    SortingState,
+} from '@tanstack/react-table';
+import { Input } from './input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 import {
+    Pagination,
     PaginationContent,
-    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
 } from './pagination';
 
-interface Column<T> {
-    key: keyof T;
-    header: string;
-    type?: 'text' | 'number' | 'date';
-}
-
-const rowHeight = 40;
-
-interface SmartTableProps<T> {
-    data: T[];
-    columns: Column<T>[];
-    pageSize?: number;
-    onPageChange?: (page: number) => void;
+interface SmartTableProps<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[];
+    data: TData[];
     onInputChange?: (value: string) => void;
+    onPageChange?: (page: number) => void;
+    pagination?: {
+        totalItems: number;
+        pageSize: number;
+    };
 }
 
-export const SmartTable = <T extends Record<string, any>>({
-    data,
+interface Pagination {
+    page: number;
+    pageSize: number;
+    nextPage: number | null;
+    prevPage: number | null;
+}
+
+export function SmartTable<TData, TValue>({
     columns,
-    pageSize = 10,
-    onPageChange,
+    data,
+    pagination: paginationProps,
     onInputChange,
-}: SmartTableProps<T>) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(pageSize);
-    const [sortConfig, setSortConfig] = useState<{
-        key: keyof T | null;
-        direction: 'asc' | 'desc' | null;
-    }>({ key: null, direction: null });
+    onPageChange,
+}: SmartTableProps<TData, TValue>) {
+    const [search, setSearch] = React.useState('');
+    const [sorting, setSorting] = React.useState<SortingState>([]);
+    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+    const [rowSelection, setRowSelection] = React.useState({});
 
-    // Sorting function
-    const sortData = (data: T[], key: keyof T, direction: 'asc' | 'desc') => {
-        return [...data].sort((a, b) => {
-            let aValue = a[key];
-            let bValue = b[key];
+    const pageSize = paginationProps?.pageSize ?? 10;
+    const totalItems = paginationProps?.totalItems ?? data.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const [pagination, setPagination] = React.useState<Pagination>({
+        page: 1,
+        pageSize: pageSize,
+        nextPage: totalPages > 1 ? 2 : null,
+        prevPage: totalPages > 1 ? 1 : null,
+    });
 
-            const column = columns.find((col) => col.key === key);
+    const table = useReactTable({
+        data,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
+        state: {
+            sorting,
+            columnFilters,
+            columnVisibility,
+            rowSelection,
+            pagination: {
+                pageIndex: 0,
+                pageSize,
+            },
+        },
+    });
 
-            // Create comparison result variable
-            let result: number;
-
-            switch (column?.type) {
-                case 'number':
-                    result = Number(aValue) - Number(bValue);
-                    break;
-                case 'date':
-                    result = new Date(aValue).getTime() - new Date(bValue).getTime();
-                    break;
-                default:
-                    // Natural sort for text that might contain numbers
-                    const collator = new Intl.Collator(undefined, {
-                        numeric: true,
-                        sensitivity: 'base',
-                    });
-                    result = collator.compare(String(aValue), String(bValue));
-            }
-
-            // Apply sort direction
-            return direction === 'desc' ? -result : result;
-        });
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (onInputChange) {
+            onInputChange(event.target.value);
+        }
+        setSearch(event.target.value);
     };
 
-    // Filter and sort data
-    const filteredAndSortedData = useMemo(() => {
-        let processed = [...data];
-
-        // Apply search filter
-        if (searchTerm) {
-            processed = processed.filter((item) =>
-                Object.values(item).some((value) => String(value).toLowerCase().includes(searchTerm.toLowerCase())),
-            );
+    const handleNextPage = () => {
+        if (pagination.nextPage === null) {
+            return;
         }
-
-        // Apply sorting
-        if (sortConfig.key && sortConfig.direction) {
-            processed = sortData(processed, sortConfig.key, sortConfig.direction);
-        }
-
-        return processed;
-    }, [data, searchTerm, sortConfig]);
-
-    // Pagination
-    const totalPages = new Array(Math.ceil(filteredAndSortedData.length / itemsPerPage))
-        .fill(0)
-        .map((_, index) => index + 1);
-    const paginatedData = filteredAndSortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    const handleSort = (key: keyof T) => {
-        setSortConfig((current) => ({
-            key,
-            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-        }));
+        handlePageChange(pagination.nextPage);
     };
 
-    const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onInputChange?.(e.target.value);
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
+    const handlePreviousPage = () => {
+        if (pagination.prevPage === null) {
+            return;
+        }
+        handlePageChange(pagination.prevPage);
     };
 
     const handlePageChange = (page: number) => {
-        const newPage = Math.max(1, Math.min(page, totalPages.length));
-        onPageChange?.(newPage);
-        setCurrentPage(newPage);
+        if (onPageChange) {
+            onPageChange(page);
+        }
+        setPagination({
+            ...pagination,
+            page,
+            nextPage: page + 1 > totalPages ? null : page + 1,
+            prevPage: page - 1 < 1 ? null : page - 1,
+        });
     };
 
-    const getVisiblePages = () => {
-        const delta = 2;
-        const range = [];
-        const rangeWithDots = [];
-        let l;
-
-        for (let i = 1; i <= totalPages.length; i++) {
-            if (i === 1 || i === totalPages.length || (i >= currentPage - delta && i <= currentPage + delta)) {
-                range.push(i);
-            }
-        }
-
-        for (let i of range) {
-            if (l) {
-                if (i - l === 2) {
-                    rangeWithDots.push(l + 1);
-                } else if (i - l !== 1) {
-                    rangeWithDots.push('...');
-                }
-            }
-            rangeWithDots.push(i);
-            l = i;
-        }
-
-        return rangeWithDots;
-    };
+    const pages = new Array(totalPages).fill(0).map((_, index) => index + 1);
 
     return (
         <div className="w-full">
             <div className="flex items-center py-4">
-                <Input placeholder="Search..." value={searchTerm} onChange={handleOnInputChange} className="max-w-sm" />
+                <Input placeholder="Search..." value={search} onChange={handleInputChange} className="max-w-sm" />
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-sm border">
                 <Table>
                     <TableHeader>
-                        <TableRow>
-                            {columns.map((column) => (
-                                <TableHead
-                                    key={String(column.key)}
-                                    className="cursor-pointer"
-                                    onClick={() => handleSort(column.key)}>
-                                    <div className="flex items-center">
-                                        {column.header}
-                                        {sortConfig.key === column.key &&
-                                            (sortConfig.direction === 'asc' ? (
-                                                <ChevronUp className="ml-1 h-4 w-4" />
-                                            ) : (
-                                                <ChevronDown className="ml-1 h-4 w-4" />
-                                            ))}
-                                    </div>
-                                </TableHead>
-                            ))}
-                        </TableRow>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => {
+                                    return (
+                                        <TableHead key={header.id}>
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
                     </TableHeader>
-                    <TableBody style={{ height: `${rowHeight * pageSize}px` }}>
-                        {paginatedData.length > 0 ? (
-                            <>
-                                {paginatedData.map((row, index) => (
-                                    <TableRow key={index} style={{ maxHeight: `${rowHeight}px` }}>
-                                        {columns.map((column) => (
-                                            <TableCell className="py-2" key={String(column.key)}>
-                                                {String(row[column.key])}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                ))}
-                                {paginatedData.length !== pageSize && (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={columns.length}
-                                            style={{ height: `${rowHeight * (pageSize - paginatedData.length)}px` }}
-                                        />
-                                    </TableRow>
-                                )}
-                            </>
+                    <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -213,42 +168,28 @@ export const SmartTable = <T extends Record<string, any>>({
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
-                    Showing {paginatedData.length} of {filteredAndSortedData.length} results
+                    {data.length}/{totalItems}
                 </div>
                 <div className="space-x-2">
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
-                                <PaginationPrevious
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                                />
+                                <PaginationPrevious href="#" onClick={handlePreviousPage} />
                             </PaginationItem>
-
-                            {getVisiblePages().map((page, index) => (
-                                <PaginationItem key={index}>
-                                    {page === '...' ? (
-                                        <PaginationEllipsis />
-                                    ) : (
+                            {pages.map((page) => {
+                                return (
+                                    <PaginationItem key={page}>
                                         <PaginationLink
-                                            onClick={() => handlePageChange(Number(page))}
-                                            isActive={page === currentPage}
-                                            className="cursor-pointer">
+                                            href="#"
+                                            isActive={page === pagination.page}
+                                            onClick={() => handlePageChange(page)}>
                                             {page}
                                         </PaginationLink>
-                                    )}
-                                </PaginationItem>
-                            ))}
-
+                                    </PaginationItem>
+                                );
+                            })}
                             <PaginationItem>
-                                <PaginationNext
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    className={
-                                        currentPage === totalPages.length
-                                            ? 'pointer-events-none opacity-50'
-                                            : 'cursor-pointer'
-                                    }
-                                />
+                                <PaginationNext href="#" onClick={handleNextPage} />
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>
@@ -256,4 +197,4 @@ export const SmartTable = <T extends Record<string, any>>({
             </div>
         </div>
     );
-};
+}
