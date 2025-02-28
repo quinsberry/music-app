@@ -63,16 +63,18 @@ export function SmartTable<TData, TValue>({
     const pageSize = paginationProps?.pageSize ?? 10;
     const totalItems = paginationProps?.totalItems ?? data.length;
     const totalPages = Math.ceil(totalItems / pageSize);
-    const [pagination, setPagination] = React.useState<Pagination>({
+    const defaultPagination: Pagination = {
         page: 1,
         pageSize: pageSize,
         nextPage: totalPages > 1 ? 2 : null,
         prevPage: totalPages > 1 ? 1 : null,
-    });
+    };
+    const [pagination, setPagination] = React.useState<Pagination>(defaultPagination);
 
     React.useEffect(() => {
         if (sorting[0]) {
             onSortingsChange?.(sorting[0]);
+            setPagination(defaultPagination);
         }
     }, [sorting]);
 
