@@ -39,9 +39,8 @@ export class SongController {
         }
         return new ResponsePagination(songResponse.songs, {
             total: songResponse.total,
-            page: Math.floor(songResponse.skip / songResponse.take) + 1,
-            pages: Math.ceil(songResponse.total / songResponse.take),
-            per_page: songResponse.take,
+            skip: songResponse.skip,
+            take: songResponse.take,
         });
     }
 }

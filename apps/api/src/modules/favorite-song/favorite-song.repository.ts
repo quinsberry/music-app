@@ -24,6 +24,10 @@ export class FavoriteSongRepository {
                 userId,
                 songId,
             },
+            include: {
+                song: true,
+                user: true,
+            }
         });
     }
 
@@ -44,7 +48,14 @@ export class FavoriteSongRepository {
         }
     ) {
         const { substr = '', skip = 0, take = 10, order = 'asc', sorting = 'id' } = options;
-        return this.prisma.favoriteSong.findMany({
+
+        const total = await this.prisma.favoriteSong.count({
+            where: {
+                userId,
+                OR: [{ song: { title: { contains: substr } } }, { song: { artist: { contains: substr } } }],
+            },
+        });
+        const favoriteSongs = await this.prisma.favoriteSong.findMany({
             skip,
             take,
             where: {
@@ -58,5 +69,12 @@ export class FavoriteSongRepository {
                 [sorting]: order,
             },
         });
+
+        return {
+            songs: favoriteSongs,
+            total,
+            skip,
+            take,
+        };
     }
 }
