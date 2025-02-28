@@ -189,7 +189,8 @@ export function SmartTable<TData, TValue>({
                                         <PaginationLink
                                             href="#"
                                             isActive={page === pagination.page}
-                                            onClick={() => handlePageChange(page)}>
+                                            onClick={() => handlePageChange(page)}
+                                        >
                                             {page}
                                         </PaginationLink>
                                     </PaginationItem>

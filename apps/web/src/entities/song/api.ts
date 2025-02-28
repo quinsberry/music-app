@@ -6,7 +6,7 @@ export const getSongs = (
     skip?: number,
     take?: number,
     sort?: keyof Song | 'favorite',
-    order?: 'asc' | 'desc',
+    order?: 'asc' | 'desc'
 ) => {
     return ApiClient.get<ResponsePagination<Song>>(`/songs/search`, {
         params: {
@@ -24,7 +24,7 @@ export const getFavoriteSongs = (
     skip?: number,
     take?: number,
     sort?: keyof Song,
-    order?: 'asc' | 'desc',
+    order?: 'asc' | 'desc'
 ) => {
     return ApiClient.get<ResponsePagination<Song>>(`/favorites`, {
         params: {

@@ -20,7 +20,8 @@ export const SongsTable = () => {
                           return (
                               <Button
                                   variant="ghost"
-                                  onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                                  onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                              >
                                   Favorite
                                   <ArrowUpDown />
                               </Button>
@@ -106,6 +107,8 @@ export const SongsTable = () => {
                     sortSongs('duration', sorting.desc ? 'desc' : 'asc');
                 } else if (sorting.id === 'year') {
                     sortSongs('year', sorting.desc ? 'desc' : 'asc');
+                } else if (sorting.id === 'favorite') {
+                    sortSongs('favorite', sorting.desc ? 'desc' : 'asc');
                 }
             }}
             pagination={{
