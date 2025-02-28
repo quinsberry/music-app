@@ -1,34 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SongService } from './song.service';
-import { CreateSongDto } from './dto/create-song.dto';
-import { UpdateSongDto } from './dto/update-song.dto';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Song } from '@prisma/client';
+import { SongRepository } from './song.repository';
 
-@Controller('song')
+@Controller('songs')
 export class SongController {
-    constructor(private readonly songService: SongService) {}
+    constructor(private readonly songRepository: SongRepository) {}
 
-    @Post()
-    create(@Body() createSongDto: CreateSongDto) {
-        return this.songService.create(createSongDto);
+    @Get('/search/:userId')
+    async searchWithFavorites(
+        @Param('userId') userId: number,
+        @Query('substr') substr: string,
+        @Query('skip') skip: number,
+        @Query('take') take: number,
+        @Query('order') order: 'asc' | 'desc',
+        @Query('sorting') sorting: keyof Omit<Song, 'id'> | 'favorite'
+    ) {
+        return this.songRepository.findAllWithFavorites(userId, { substr, skip, take, order, sorting });
     }
 
-    @Get()
-    findAll() {
-        return this.songService.findAll();
-    }
-
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.songService.findOne(+id);
-    }
-
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateSongDto: UpdateSongDto) {
-        return this.songService.update(+id, updateSongDto);
-    }
-
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.songService.remove(+id);
+    @Get('/search')
+    search(
+        @Query('substr') substr: string,
+        @Query('skip') skip: number,
+        @Query('take') take: number,
+        @Query('order') order: 'asc' | 'desc',
+        @Query('sorting') sorting: keyof Omit<Song, 'id'>
+    ) {
+        return this.songRepository.findAll({ substr, skip, take, order, sorting });
     }
 }

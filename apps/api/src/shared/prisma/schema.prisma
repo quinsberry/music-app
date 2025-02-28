@@ -27,7 +27,7 @@ model Song {
     genre        String
     createdAt    DateTime       @default(now()) @map("created_at")
     updatedAt    DateTime       @updatedAt @map("updated_at")
-    FavoriteSong FavoriteSong[]
+    favoriteSongs FavoriteSong[]
 
     @@map("songs")
 }
