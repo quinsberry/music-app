@@ -1,4 +1,14 @@
-import { Song } from '@prisma/client';
+import { Song, User } from '@prisma/client';
+
+export const users: User[] = [
+    {
+        id: 1,
+        name: 'admin',
+        password: 'root',
+        createdAt: new Date('2024-01-28T00:00:00Z'),
+        updatedAt: new Date('2024-01-28T00:00:00Z'),
+    },
+];
 
 export const songs: Song[] = [
     {

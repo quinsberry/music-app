@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { PrismaClient } from '@prisma/client';
 import { AppModule } from '@/app.module';
-import { songs } from './data';
+import { songs, users } from './data';
 
 async function main() {
     NestFactory.createApplicationContext(AppModule).then(async (appContext) => {
@@ -14,8 +14,17 @@ async function main() {
             return;
         }
 
+        async function seedUsers(): Promise<void> {
+            await prisma.user.createMany({
+                data: users,
+            });
+            return;
+        }
+
         return seedSongs()
             .then(() => console.log('Songs are seeded'))
+            .then(() => seedUsers())
+            .then(() => console.log('Users are seeded'))
             .then(() => {
                 console.debug('Seeding complete!');
             })

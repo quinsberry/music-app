@@ -1,43 +1,48 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Header, Param, Query } from '@nestjs/common';
 import { Song } from '@prisma/client';
 import { SongRepository } from './song.repository';
+import { ResponsePagination } from '@/shared/responses/ResponsePagination';
+import { COOKIE_AUTH_TOKEN_KEY } from '../auth/guards/auth.guard';
+import { Cookies } from '@/shared/decorators/cookies.decorator';
 
 @Controller('songs')
 export class SongController {
     constructor(private readonly songRepository: SongRepository) {}
 
-    @Get('/search/:userId')
-    async searchWithFavorites(
-        @Param('userId') userId: number,
-        @Query('substr') substr?: string,
-        @Query('skip') skip?: string,
-        @Query('take') take?: string,
-        @Query('order') order?: 'asc' | 'desc',
-        @Query('sorting') sorting?: keyof Omit<Song, 'id'> | 'favorite'
-    ) {
-        return this.songRepository.findAllWithFavorites(userId, {
-            substr,
-            skip: skip ? parseInt(skip) : undefined,
-            take: take ? parseInt(take) : undefined,
-            order,
-            sorting,
-        });
-    }
-
     @Get('/search')
-    search(
+    @Header('content-type', 'application/json')
+    async search(
+        @Cookies(COOKIE_AUTH_TOKEN_KEY) userId: string,
         @Query('substr') substr?: string,
         @Query('skip') skip?: string,
         @Query('take') take?: string,
         @Query('order') order?: 'asc' | 'desc',
         @Query('sorting') sorting?: keyof Omit<Song, 'id'>
     ) {
-        return this.songRepository.findAll({
-            substr,
-            skip: skip ? parseInt(skip) : undefined,
-            take: take ? parseInt(take) : undefined,
-            order,
-            sorting,
+        let songResponse;
+        if (userId) {
+            songResponse = await this.songRepository.findAllWithFavorites(Number(userId), {
+                substr,
+                skip: skip ? parseInt(skip) : undefined,
+                take: take ? parseInt(take) : undefined,
+                order,
+                sorting,
+            });
+
+        } else {
+            songResponse = await this.songRepository.findAll({
+                substr,
+                skip: skip ? parseInt(skip) : undefined,
+                take: take ? parseInt(take) : undefined,
+                order,
+                sorting,
+            });
+        }
+        return new ResponsePagination(songResponse.songs, {
+            total: songResponse.total,
+            page: Math.floor(songResponse.skip / songResponse.take) + 1,
+            pages: Math.ceil(songResponse.total / songResponse.take),
+            per_page: songResponse.take,
         });
     }
 }

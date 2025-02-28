@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { Prisma, Song } from '@prisma/client';
-import { ResponseList } from '@/shared/responses/ResponseList';
 
 @Injectable()
 export class SongRepository {
@@ -21,6 +20,11 @@ export class SongRepository {
         sorting?: keyof Omit<Song, 'id'>;
     }) {
         const { substr = '', skip = 0, take = 10, order = 'asc', sorting = 'id' } = options;
+        const total = await this.prisma.song.count({
+            where: {
+                OR: [{ title: { contains: substr } }, { artist: { contains: substr } }],
+            },
+        });
         const songs = await this.prisma.song.findMany({
             skip,
             take,
@@ -31,8 +35,12 @@ export class SongRepository {
                 [sorting]: order,
             },
         });
-
-        return new ResponseList(songs);
+        return {
+            songs,
+            total,
+            skip,
+            take,
+        };
     }
 
     async findAllWithFavorites(
@@ -61,27 +69,36 @@ export class SongRepository {
             };
         }
 
-        const songs = await this.prisma.song.findMany({
+        const total = await this.prisma.song.count({
+            where: {
+                OR: [{ title: { contains: substr } }, { artist: { contains: substr } }],
+            },
+        });
+        const songs = (await this.prisma.song.findMany({
             skip,
             take,
             where: {
                 OR: [{ title: { contains: substr } }, { artist: { contains: substr } }],
-                favoriteSongs: {
-                    some: {
-                        userId: userId,
-                    },
-                },
             },
             include: {
-                favoriteSongs: {
-                    include: {
-                        user: true,
-                    },
-                },
+                favoriteSongs: true,
             },
             orderBy,
+        }))
+        .map((song) => {
+            const newSong = {
+                ...song,
+                isFavorite: song.favoriteSongs.some((favorite) => favorite.userId === userId),
+            };
+            delete newSong.favoriteSongs;
+            return newSong;
         });
 
-        return new ResponseList(songs);
+        return {
+            songs,
+            total,
+            skip,
+            take,
+        };
     }
 }

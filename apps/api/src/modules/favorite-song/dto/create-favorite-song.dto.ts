@@ -1,4 +1,3 @@
 export class CreateFavoriteSongDto {
-    songId: number;
-    userId: number;
+    songId: string;
 }
