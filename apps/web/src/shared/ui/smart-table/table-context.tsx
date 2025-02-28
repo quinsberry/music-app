@@ -1,11 +1,5 @@
 import * as React from 'react';
-import type { ColumnFiltersState, SortingState, VisibilityState, Table } from '@tanstack/react-table';
-
-interface TablePaginationState {
-    page: number;
-    nextPage: number | null;
-    prevPage: number | null;
-}
+import type { ColumnFiltersState, SortingState, Table } from '@tanstack/react-table';
 
 interface TableContextType {
     table: Table<any>;
@@ -13,12 +7,6 @@ interface TableContextType {
     setSorting: (sorting: SortingState) => void;
     columnFilters: ColumnFiltersState;
     setColumnFilters: (filters: ColumnFiltersState) => void;
-    columnVisibility: VisibilityState;
-    setColumnVisibility: (visibility: VisibilityState) => void;
-    pagination: TablePaginationState;
-    setPagination: (pagination: TablePaginationState) => void;
-    pageSize: number;
-    setPageSize: (size: number) => void;
     totalItems: number;
     totalPages: number;
 }

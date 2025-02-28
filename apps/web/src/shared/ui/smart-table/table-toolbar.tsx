@@ -1,31 +1,33 @@
 import { useState } from 'react';
 import { Input } from '../input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select';
-import { useTableContext } from './table-context';
 
 interface TableToolbarProps {
     pageSizeOptions: number[];
+    defaultPageSize: number;
     onInputChange?: (value: string) => void;
     onPageSizeChange?: (value: number) => void;
 }
 
-export function TableToolbar({ onInputChange, pageSizeOptions, onPageSizeChange }: TableToolbarProps) {
-    const { pageSize, setPageSize } = useTableContext();
+export function TableToolbar({ onInputChange, pageSizeOptions, defaultPageSize, onPageSizeChange }: TableToolbarProps) {
     const [search, setSearch] = useState('');
+    const [pageSize, setPageSize] = useState(defaultPageSize);
+
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         onInputChange?.(event.target.value);
         setSearch(event.target.value);
     };
+
+    const handlePageSizeChange = (value: string) => {
+        const newSize = Number(value);
+        setPageSize(newSize);
+        onPageSizeChange?.(newSize);
+    };
+
     return (
         <div className="flex items-center justify-between py-4">
             <Input placeholder="Search..." value={search} onChange={handleInputChange} className="max-w-sm" />
-            <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                    const newSize = Number(value);
-                    onPageSizeChange?.(newSize);
-                }}
-            >
+            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select page size" />
                 </SelectTrigger>

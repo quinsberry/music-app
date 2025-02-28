@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Pagination,
     PaginationContent,
@@ -14,7 +15,13 @@ interface TablePaginationProps {
 }
 
 export function TablePagination({ onPageChange, itemsCount }: TablePaginationProps) {
-    const { pagination, setPagination, totalItems, totalPages } = useTableContext();
+    const { totalItems, totalPages } = useTableContext();
+    const [pagination, setPagination] = useState({
+        page: 1,
+        nextPage: totalPages > 1 ? 2 : null,
+        prevPage: null as number | null,
+    });
+
     const pages = new Array(totalPages).fill(0).map((_, index) => index + 1);
 
     const handlePageChange = (page: number) => {

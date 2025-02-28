@@ -8,7 +8,6 @@ import {
     getFilteredRowModel,
     type ColumnFiltersState,
     getSortedRowModel,
-    type VisibilityState,
     type SortingState,
     type RowData,
 } from '@tanstack/react-table';
@@ -33,12 +32,6 @@ interface SmartTableProps<TData, TValue> {
     onSortingsChange?: (sorting: SortingState[number]) => void;
 }
 
-interface TablePaginationState {
-    page: number;
-    nextPage: number | null;
-    prevPage: number | null;
-}
-
 export function SmartTable<TData, TValue>({
     columns,
     data,
@@ -50,28 +43,15 @@ export function SmartTable<TData, TValue>({
 }: SmartTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-    const [rowSelection, setRowSelection] = React.useState({});
-    const [pageSize, setPageSize] = React.useState<number>(paginationProps?.pageSize ?? 10);
 
     const totalItems = paginationProps?.totalItems ?? data.length;
-    const totalPages = Math.ceil(totalItems / pageSize);
-    const [pagination, setPagination] = React.useState<TablePaginationState>({
-        page: 1,
-        nextPage: totalPages > 1 ? 2 : null,
-        prevPage: null,
-    });
+    const totalPages = Math.ceil(totalItems / (paginationProps?.pageSize ?? 10));
+
     React.useEffect(() => {
         if (sorting[0]) {
             onSortingsChange?.(sorting[0]);
-            setPagination((prev) => ({
-                ...prev,
-                page: 1,
-                nextPage: totalPages > 1 ? 2 : null,
-                prevPage: null,
-            }));
         }
-    }, [sorting, onSortingsChange, totalPages]);
+    }, [sorting, onSortingsChange]);
 
     const table = useReactTable({
         data,
@@ -81,17 +61,9 @@ export function SmartTable<TData, TValue>({
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
         state: {
             sorting,
             columnFilters,
-            columnVisibility,
-            rowSelection,
-            pagination: {
-                pageIndex: pagination.page - 1,
-                pageSize: pageSize,
-            },
         },
         manualPagination: true,
         pageCount: totalPages,
@@ -104,16 +76,10 @@ export function SmartTable<TData, TValue>({
             setSorting,
             columnFilters,
             setColumnFilters,
-            columnVisibility,
-            setColumnVisibility,
-            pagination,
-            setPagination,
-            pageSize,
-            setPageSize,
             totalItems,
             totalPages,
         }),
-        [table, sorting, columnFilters, columnVisibility, pagination, pageSize, totalItems, totalPages]
+        [table, sorting, columnFilters, totalItems, totalPages]
     );
 
     return (
@@ -121,6 +87,7 @@ export function SmartTable<TData, TValue>({
             <div className="w-full">
                 <TableToolbar
                     pageSizeOptions={paginationProps?.pageSizeOptions ?? [10, 20, 30, 40, 50]}
+                    defaultPageSize={paginationProps?.pageSize ?? 10}
                     onPageSizeChange={onPageSizeChange}
                     onInputChange={onInputChange}
                 />
