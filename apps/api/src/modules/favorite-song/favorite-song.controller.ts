@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Param, Query, BadRequestException, UseGuards, Req, Delete, HttpCode } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Param,
+    Query,
+    BadRequestException,
+    UseGuards,
+    Req,
+    Delete,
+    HttpCode,
+} from '@nestjs/common';
 import { CreateFavoriteSongDto } from './dto/create-favorite-song.dto';
 import { FavoriteSongRepository } from './favorite-song.repository';
 import { FavoriteSong } from '@prisma/client';

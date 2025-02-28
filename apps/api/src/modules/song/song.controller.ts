@@ -17,7 +17,7 @@ export class SongController {
         @Query('skip') skip?: string,
         @Query('take') take?: string,
         @Query('order') order?: 'asc' | 'desc',
-        @Query('sorting') sorting?: keyof Omit<Song, 'id'>
+        @Query('sort') sorting?: keyof Omit<Song, 'id'>
     ) {
         let songResponse;
         if (userId) {
@@ -28,7 +28,6 @@ export class SongController {
                 order,
                 sorting,
             });
-
         } else {
             songResponse = await this.songRepository.findAll({
                 substr,

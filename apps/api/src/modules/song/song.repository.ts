@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import { Prisma, Song } from '@prisma/client';
+import { Song } from '@prisma/client';
 
 @Injectable()
 export class SongRepository {
+    private readonly logger = new Logger(SongRepository.name);
+
     constructor(private readonly prisma: PrismaService) {}
 
     async findOne(id: number) {
@@ -55,47 +57,66 @@ export class SongRepository {
     ) {
         const { substr = '', skip = 0, take = 10, order = 'asc', sorting = 'id' } = options;
 
-        let orderBy: Prisma.SongOrderByWithRelationInput = { [sorting]: order };
-
-        if (sorting === 'favorite') {
-            orderBy = {
-                favoriteSongs: {
-                    _count: order,
-                },
-            };
-        } else {
-            orderBy = {
-                [sorting]: order,
-            };
-        }
-
         const total = await this.prisma.song.count({
             where: {
                 OR: [{ title: { contains: substr } }, { artist: { contains: substr } }],
             },
         });
-        const songs = (await this.prisma.song.findMany({
+
+        if (sorting === 'favorite') {
+            const songs = await this.prisma.$queryRaw<(Song & { isFavorite: boolean })[]>`
+            SELECT 
+                s.*,
+                CASE WHEN fs."user_id" IS NOT NULL THEN 1 ELSE 0 END as "isFavorite"
+            FROM "songs" s
+            LEFT JOIN "favorite_songs" fs ON s.id = fs."song_id" AND fs."user_id" = ${userId}
+            WHERE s.title LIKE '%' || ${substr} || '%' 
+                OR s.artist LIKE '%' || ${substr} || '%'
+            ORDER BY 
+                CASE WHEN fs."user_id" IS NOT NULL 
+                    THEN ${order === 'asc' ? 0 : 1}
+                    ELSE ${order === 'asc' ? 1 : 0}
+                END,
+                s.id ASC
+            LIMIT ${take}
+            OFFSET ${skip}
+        `;
+
+            return {
+                songs: songs.map((song) => ({
+                    ...song,
+                    isFavorite: Boolean(song.isFavorite),
+                })),
+                total,
+                skip,
+                take,
+            };
+        }
+
+        const songs = await this.prisma.song.findMany({
             skip,
             take,
             where: {
                 OR: [{ title: { contains: substr } }, { artist: { contains: substr } }],
             },
             include: {
-                favoriteSongs: true,
+                favoriteSongs: {
+                    where: {
+                        userId,
+                    },
+                },
             },
-            orderBy,
-        }))
-        .map((song) => {
-            const newSong = {
-                ...song,
-                isFavorite: song.favoriteSongs.some((favorite) => favorite.userId === userId),
-            };
-            delete newSong.favoriteSongs;
-            return newSong;
+            orderBy: {
+                [sorting]: order,
+            },
         });
 
         return {
-            songs,
+            songs: songs.map((song) => ({
+                ...song,
+                isFavorite: song.favoriteSongs.length > 0,
+                favoriteSongs: undefined,
+            })),
             total,
             skip,
             take,
