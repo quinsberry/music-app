@@ -11,12 +11,14 @@ interface ResponseList<T> {
     };
 }
 
-export const getSongs = (val?: string, skip?: number, take?: number) => {
+export const getSongs = (val?: string, skip?: number, take?: number, sort?: keyof Song, order?: 'asc' | 'desc') => {
     return ApiClient.get<ResponseList<Song>>(`/songs/search`, {
         params: {
             ...(val ? { substr: val } : undefined),
             ...(skip !== undefined ? { skip: skip.toString() } : undefined),
             ...(take !== undefined ? { take: take.toString() } : undefined),
+            ...(sort !== undefined ? { sort } : undefined),
+            ...(order !== undefined ? { order } : undefined),
         },
     });
 };

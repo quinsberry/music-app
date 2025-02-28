@@ -12,6 +12,7 @@ import {
     getSortedRowModel,
     VisibilityState,
     SortingState,
+    RowData,
 } from '@tanstack/react-table';
 import { Input } from './input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
@@ -24,8 +25,10 @@ import {
     PaginationPrevious,
 } from './pagination';
 
+export type Column<TData extends RowData, TValue = unknown> = ColumnDef<TData, TValue>;
+
 interface SmartTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[];
+    columns: Column<TData, TValue>[];
     data: TData[];
     onInputChange?: (value: string) => void;
     onPageChange?: (page: number) => void;
@@ -33,6 +36,7 @@ interface SmartTableProps<TData, TValue> {
         totalItems: number;
         pageSize: number;
     };
+    onSortingsChange?: (sortings: SortingState[number]) => void;
 }
 
 interface Pagination {
@@ -48,6 +52,7 @@ export function SmartTable<TData, TValue>({
     pagination: paginationProps,
     onInputChange,
     onPageChange,
+    onSortingsChange,
 }: SmartTableProps<TData, TValue>) {
     const [search, setSearch] = React.useState('');
     const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -64,6 +69,12 @@ export function SmartTable<TData, TValue>({
         nextPage: totalPages > 1 ? 2 : null,
         prevPage: totalPages > 1 ? 1 : null,
     });
+
+    React.useEffect(() => {
+        if (sorting[0]) {
+            onSortingsChange?.(sorting[0]);
+        }
+    }, [sorting]);
 
     const table = useReactTable({
         data,
@@ -89,9 +100,7 @@ export function SmartTable<TData, TValue>({
     });
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (onInputChange) {
-            onInputChange(event.target.value);
-        }
+        onInputChange?.(event.target.value);
         setSearch(event.target.value);
     };
 
@@ -110,9 +119,7 @@ export function SmartTable<TData, TValue>({
     };
 
     const handlePageChange = (page: number) => {
-        if (onPageChange) {
-            onPageChange(page);
-        }
+        onPageChange?.(page);
         setPagination({
             ...pagination,
             page,
