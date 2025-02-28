@@ -1,34 +1,57 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { FavoriteSongService } from './favorite-song.service';
+import { Controller, Get, Post, Body, Param, Query, BadRequestException } from '@nestjs/common';
 import { CreateFavoriteSongDto } from './dto/create-favorite-song.dto';
-import { UpdateFavoriteSongDto } from './dto/update-favorite-song.dto';
+import { FavoriteSongRepository } from './favorite-song.repository';
+import { FavoriteSong } from '@prisma/client';
 
-@Controller('favorite-song')
+@Controller('favorites')
 export class FavoriteSongController {
-    constructor(private readonly favoriteSongService: FavoriteSongService) {}
+    constructor(private readonly favoriteSongRepository: FavoriteSongRepository) {}
 
     @Post()
-    create(@Body() createFavoriteSongDto: CreateFavoriteSongDto) {
-        return this.favoriteSongService.create(createFavoriteSongDto);
+    add(@Body() createFavoriteSongDto: CreateFavoriteSongDto) {
+        return this.favoriteSongRepository.addToFavorites(createFavoriteSongDto.userId, createFavoriteSongDto.songId);
     }
 
     @Get()
-    findAll() {
-        return this.favoriteSongService.findAll();
+    findAll(
+        @Query('userId') userId?: string,
+        @Query('substr') substr?: string,
+        @Query('skip') skip?: string,
+        @Query('take') take?: string,
+        @Query('order') order?: 'asc' | 'desc',
+        @Query('sorting') sorting?: keyof Omit<FavoriteSong, 'id'>
+    ) {
+        if (!userId) {
+            throw new BadRequestException('userId parameter is required');
+        }
+        return this.favoriteSongRepository.findAll(Number(userId), {
+            substr,
+            skip: skip ? Number(skip) : undefined,
+            take: take ? Number(take) : undefined,
+            order,
+            sorting,
+        });
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.favoriteSongService.findOne(+id);
+    @Get(':songId')
+    findOne(@Param('songId') songId: string, @Query('userId') userId: string) {
+        if (!songId) {
+            throw new BadRequestException('songId parameter is required');
+        }
+        if (!userId) {
+            throw new BadRequestException('userId parameter is required');
+        }
+        return this.favoriteSongRepository.findOne(Number(userId), Number(songId));
     }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateFavoriteSongDto: UpdateFavoriteSongDto) {
-        return this.favoriteSongService.update(+id, updateFavoriteSongDto);
-    }
-
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.favoriteSongService.remove(+id);
+    @Get(':songId')
+    remove(@Param('songId') songId: string, @Query('userId') userId: string) {
+        if (!songId) {
+            throw new BadRequestException('songId parameter is required');
+        }
+        if (!userId) {
+            throw new BadRequestException('userId parameter is required');
+        }
+        return this.favoriteSongRepository.removeFromFavorites(Number(userId), Number(songId));
     }
 }

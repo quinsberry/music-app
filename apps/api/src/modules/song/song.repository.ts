@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { Prisma, Song } from '@prisma/client';
+import { ResponseList } from '@/shared/responses/ResponseList';
 
 @Injectable()
 export class SongRepository {
@@ -20,7 +21,7 @@ export class SongRepository {
         sorting?: keyof Omit<Song, 'id'>;
     }) {
         const { substr = '', skip = 0, take = 10, order = 'asc', sorting = 'id' } = options;
-        return this.prisma.song.findMany({
+        const songs = await this.prisma.song.findMany({
             skip,
             take,
             where: {
@@ -30,6 +31,8 @@ export class SongRepository {
                 [sorting]: order,
             },
         });
+
+        return new ResponseList(songs);
     }
 
     async findAllWithFavorites(
@@ -58,7 +61,7 @@ export class SongRepository {
             };
         }
 
-        return this.prisma.song.findMany({
+        const songs = await this.prisma.song.findMany({
             skip,
             take,
             where: {
@@ -69,25 +72,16 @@ export class SongRepository {
                     },
                 },
             },
-            select: {
-                id: true,
-                title: true,
-                duration: true,
-                artist: true,
-                year: true,
-                genre: true,
-                createdAt: true,
-                updatedAt: true,
-                // isFavorite: {
-                //     select: {
-                //         userId: true,
-                //     },
-                //     where: {
-                //         userId: userId,
-                //     },
-                // },
+            include: {
+                favoriteSongs: {
+                    include: {
+                        user: true,
+                    },
+                },
             },
             orderBy,
         });
+
+        return new ResponseList(songs);
     }
 }
