@@ -46,7 +46,7 @@ export const useSongsTableStore = () => {
         }
     };
 
-    const searchSongs = useCallback(debounce(fetchSongs, 300), []);
+    const searchSongs = debounce(fetchSongs, 300);
 
     const setPageSize = async (newPageSize: number) => {
         setPagination((prev) => ({
