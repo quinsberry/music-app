@@ -19,14 +19,14 @@ model User {
 }
 
 model Song {
-    id           Int            @id @default(autoincrement())
-    title        String
-    duration     Int
-    artist       String
-    year         Int
-    genre        String
-    createdAt    DateTime       @default(now()) @map("created_at")
-    updatedAt    DateTime       @updatedAt @map("updated_at")
+    id            Int            @id @default(autoincrement())
+    title         String
+    duration      Int
+    artist        String
+    year          Int
+    genre         String
+    createdAt     DateTime       @default(now()) @map("created_at")
+    updatedAt     DateTime       @updatedAt @map("updated_at")
     favoriteSongs FavoriteSong[]
 
     @@map("songs")

@@ -60,13 +60,17 @@ export class FavoriteSongController {
     @Delete(':songId')
     @UseGuards(AuthGuard)
     @HttpCode(204)
-    remove(@Param('songId') songId: string, @Cookies(COOKIE_AUTH_TOKEN_KEY) userId: string) {
+    async remove(@Param('songId') songId: string, @Cookies(COOKIE_AUTH_TOKEN_KEY) userId: string) {
         if (!songId) {
             throw new BadRequestException('songId parameter is required');
         }
         if (!userId) {
             throw new BadRequestException('userId parameter is required');
         }
-        this.favoriteSongRepository.removeFromFavorites(Number(userId), Number(songId));
+        const favoriteSong = await this.favoriteSongRepository.findOne(Number(userId), Number(songId));
+        if (!favoriteSong) {
+            throw new BadRequestException('Song not found in favorites');
+        }
+        await this.favoriteSongRepository.removeFromFavorites(Number(userId), Number(songId));
     }
 }
