@@ -3,7 +3,7 @@
 import { Column, SmartTable } from '@/shared/ui/smart-table';
 import { Song } from '@repo/api/models';
 import { Button } from '@/shared/ui/button';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Star } from 'lucide-react';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { useSongsTableStore } from './useSongsTableStore';
 
@@ -20,9 +20,10 @@ export const SongsTable = () => {
                           return (
                               <Button
                                   variant="ghost"
+                                  size={'icon'}
                                   onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                               >
-                                  Favorite
+                                  <Star className="text-yellow-500" />
                                   <ArrowUpDown />
                               </Button>
                           );
