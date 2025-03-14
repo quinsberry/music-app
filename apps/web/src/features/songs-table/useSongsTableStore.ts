@@ -7,6 +7,10 @@ import { login } from '@/entities/user';
 interface Pagination {
     totalItems: number;
     pageSize: number;
+    sorting: {
+        field: 'title' | 'duration' | 'year' | 'favorite';
+        order: 'asc' | 'desc';
+    };
 }
 
 export const useSongsTableStore = () => {
@@ -14,25 +18,35 @@ export const useSongsTableStore = () => {
     const [pagination, setPagination] = useState<Pagination>({
         totalItems: 0,
         pageSize: 10,
+        sorting: {
+            field: 'title',
+            order: 'asc',
+        },
     });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const fetchSongs = async (val: string = '', page: number) => {
-        const songs = await getSongs(val, (page - 1) * pagination.pageSize, pagination.pageSize);
+        const songs = await getSongs(val, (page - 1) * pagination.pageSize, pagination.pageSize, pagination.sorting.field, pagination.sorting.order);
         setSongs(songs.data);
-        setPagination({
+        setPagination((prev) => ({
+            ...prev,
             totalItems: songs.meta.total,
             pageSize: songs.meta.per_page,
-        });
+        }));
     };
 
     const sortSongs = async (sorting: 'title' | 'duration' | 'year' | 'favorite', order: 'asc' | 'desc') => {
         const songs = await getSongs('', 0, pagination.pageSize, sorting, order);
         setSongs(songs.data);
-        setPagination({
+        setPagination((prev) => ({
+            ...prev,
             totalItems: songs.meta.total,
             pageSize: songs.meta.per_page,
-        });
+            sorting: {
+                field: sorting,
+                order,
+            },
+        }));
     };
 
     const toggleFavorite = async (checked: boolean, songId: number) => {
@@ -49,15 +63,11 @@ export const useSongsTableStore = () => {
     const searchSongs = debounce(fetchSongs, 300);
 
     const setPageSize = async (newPageSize: number) => {
-        setPagination((prev) => ({
-            ...prev,
-            pageSize: newPageSize,
-        }));
-
         try {
-            const songs = await getSongs('', 0, newPageSize);
+            const songs = await getSongs('', 0, newPageSize, pagination.sorting.field, pagination.sorting.order);
             setSongs(songs.data);
             setPagination((prev) => ({
+                ...prev,
                 totalItems: songs.meta.total,
                 pageSize: newPageSize,
             }));
