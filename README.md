@@ -14,9 +14,24 @@ The API is built with Nest.js and uses Module-based architecture that is common 
 
 The web is built with Next.js and uses tailwind/shadcn for styling. Here I chose the mix of Feature-based architecture and Feature-sliced design to handle the simplicity of the app and make it easier to scale.
 
-## Using this example
 
-Run the following command:
+### Setup
+
+```sh
+# Installation
+1. npm install turbo # to install dependencies
+2. npm run init # to initialize the project
+
+# Development
+npm run dev # to start the app
+
+# Production
+1. # change the environment variables in the `.env` files
+2. npm run build # to build the app
+3. npm run start # to run the built version
+```
+
+### Commands
 
 ```sh
 npm install turbo # install dependencies

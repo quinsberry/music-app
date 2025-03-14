@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 3000",
+    "init": "cp .env.example .env",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

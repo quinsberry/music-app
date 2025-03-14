@@ -2,8 +2,10 @@
     "name": "music-app",
     "private": true,
     "scripts": {
-        "build": "turbo run build",
         "dev": "turbo run dev",
+        "init": "npm run build:packages && turbo run init",
+        "build": "turbo run build --force",
+        "build:packages": "turbo run build --force --filter=\"./packages/*\"",
         "start": "turbo run start",
         "lint": "turbo run lint",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
